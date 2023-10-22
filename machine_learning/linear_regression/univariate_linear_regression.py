@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import requests
+from data import collect_example_dataset
 """
 
 This file, alongside multivariate_linear_regression is intended to supersede the currently 
@@ -21,31 +22,14 @@ Things to investigate
 
 3. Measure speed of regression technique against data size. 
 """
-
-def collect_example_dataset():
-    """
-    Collect Data set of CSGO
-    Data contains ADR vs Rating of a Player
-    :return dataset obtained from link
-    """
-    response = requests.get(
-        "https://raw.githubusercontent.com/yashLadha/The_Math_of_Intelligence/"
-        "master/Week1/ADRvsRating.csv"
-    )
-    lines = response.text.splitlines()[1:]
-    data = []
-    for data_point in lines:
-        data.append(data_point.split(','))
-    return np.array(data).astype(np.float64)
-
-        
+   
         
 def linear_regression_coefficients(x,y):
     xbar,ybar = np.mean(x), np.mean(y)
     m = np.sum(np.dot((x-xbar),(y-ybar)))/np.sum((x-xbar)**2)
     b = ybar - m * xbar
-    b_err, m_err = standard_error(x,xbar,y,m,b)
-    return [m,m_err,b,b_err]
+    b_err, m_err,sse = standard_error(x,xbar,y,m,b)
+    return [m,m_err,b,b_err,sse]
 
 
 def standard_error(x,xbar,y,m,b):
@@ -65,7 +49,7 @@ def standard_error(x,xbar,y,m,b):
     sum_variance_x = np.sum(np.square(x-xbar))
     s_b = np.sqrt((1/(n-2))*sum_square_residuals/sum_variance_x) #standard error of slope. 
     s_a = s_b * np.sqrt((1/n)*np.sum(np.square(x)))
-    return s_a, s_b
+    return s_a, s_b, sum_square_residuals
     
 
 
@@ -76,7 +60,7 @@ def plot(data,coeff, xlabel='CSGO rank', ylabel='ADR Rating'):
     :param coeff    : [gradient, gradient error, y-intercept, y-intercept error]
     :return void
     """
-    m,m_err,b,b_err = coeff
+    m,m_err,b,b_err,sse = coeff
     x,y = data[:,0],data[:,1]
     plt.grid()
     plt.scatter(x,y,label='Raw data')
@@ -115,7 +99,7 @@ def linear_regression(data=collect_example_dataset()):
         x,y = data
     coeff = linear_regression_coefficients(x,y)
     plot(data,coeff)
-    return linear_regression
+    return coeff
 
 
 linear_regression()
